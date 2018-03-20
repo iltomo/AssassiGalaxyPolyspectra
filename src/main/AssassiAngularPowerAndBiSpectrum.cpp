@@ -8,6 +8,8 @@
 #include <chrono>
 #include <memory>
 
+#include "../include/Cosmology.h"
+
 #include "mpi.h"
 
 class Assassi {
@@ -26,7 +28,9 @@ class Assassi {
 
 			MPI::Init (argc, argv);
 
-			std::cout << "Hello world!" << std::endl;
+			Cosmology cosmo (argv [1]);
+
+			std::cout << cosmo.H0 << std::endl << cosmo.A0 << std::endl;
 
 			MPI::Finalize ();
 
