@@ -26,3 +26,4 @@ $(BINDIR)/%.o: $(SSDIR)/%.cpp $(HEADDIR)/%.h
 
 clean:
 	rm -f $(BINDIR)/*
+
