@@ -30,7 +30,7 @@ class Assassi {
 
 			Cosmology cosmo (argv [1]);
 
-			std::cout << cosmo.H0 << std::endl << cosmo.A0 << std::endl;
+			std::cout << cosmo.HH (cosmo.zCMB) << std::endl << cosmo.HH (cosmo.zmax) << std::endl;
 
 			MPI::Finalize ();
 
