@@ -28,9 +28,9 @@ class Assassi {
 
 			MPI::Init (argc, argv);
 
-			Cosmology cosmo (argv [1]);
+			Geometry cosmo (argv [1]);
 
-			std::cout << cosmo.HH (cosmo.zCMB) << std::endl << cosmo.HH (cosmo.zmax) << std::endl;
+			std::cout << cosmo.zChi (cosmo.ChiCMB) << std::endl << cosmo.zChi (cosmo.Chimax) << std::endl;
 
 			MPI::Finalize ();
 

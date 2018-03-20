@@ -72,6 +72,13 @@ class Cosmology {
 		///	Comoving distance to the maximum redshift in this analysis
 		double Chimax;
 
+		/// Size of the z and Chi(z) arrays
+		int nChi;
+		/// Array containing values of redshift
+		double* zarr;
+		/// Array containing values of Chi (z)
+		double* Chiarr;
+
 		/**
 		 *	@brief	Interpolation of the comoving distance over the redshift
 		 *	@param	Chi, the comoving distance
@@ -79,6 +86,10 @@ class Cosmology {
 		 */
 		double zChi (double Chi);
 
+		/// Filename for the Gauss-Legendre quadrature with lmax = 20
+		std::string GLQ20;
+		/// Filename for the Gauss-Legendre quadrature with lmax = 50
+		std::string GLQ50;
 
 		/**
 		 *	@brief	Destructor
@@ -86,5 +97,40 @@ class Cosmology {
 		~Cosmology ();
 
 };
+
+class Geometry:public Cosmology {
+
+	private:
+
+		/// Maximum degree in the Legendre expansion
+		int La;
+		/// Filename for the Gauss-Legendre quadrature with lmax = 20
+		std::string GLQ;
+		/// Abscissae for the Gauss-Legendre quadrature
+		double* ua;
+		/// Weight for the Gauss-Legendre quadrature
+		double* wa;
+		/// Coefficients for the Legendre polynomials
+		double* ca;
+		/// List of scale factor for the abscissae ua
+		double* dataa;
+
+	public:
+
+		/**
+		 *	@brief	Initialized Constructor
+		 *	@param	pfile, the name of the parameter file
+		 *	@return	Initialized Geometry object
+		 */
+		Geometry (std::string pfile);
+
+
+		/**
+		 *	@brief	Destructor
+		 */
+		~Geometry ();
+
+};
+
 
 #endif
