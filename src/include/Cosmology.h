@@ -1,7 +1,7 @@
 /**
  *	@file		src/include/Cosmology.h
  *	@date		20/03/2018
- *	$author	ATroja
+ *	@author	ATroja
  */
 
 #ifndef COSMOLOGY_H
@@ -71,6 +71,8 @@ class Cosmology {
 		double ChiCMB;
 		///	Comoving distance to the maximum redshift in this analysis
 		double Chimax;
+		///	Inverse of the comoving distance to the maximum redshift in this analysis
+		double inv_Chimax;
 
 		/// Size of the z and Chi(z) arrays
 		int nChi;
@@ -123,6 +125,13 @@ class Geometry:public Cosmology {
 		 *	@return	Initialized Geometry object
 		 */
 		Geometry (std::string pfile);
+
+		/**
+		 *	@brief	This function evaluates the scale factor at a given comoving distance
+		 *	@param	Chi, the comoving distance
+		 *	@return	The scale factor at Chi
+		 */
+		double aChi (double Chi);
 
 
 		/**

@@ -5,7 +5,10 @@
  */
 
 #include "../include/Cosmology.h"
+#include "../include/FileUtils.h"
+#include "../include/OtherUtils.h"
 
+#include <memory>
 #include <cmath>
 
 #include "gsl/gsl_integration.h"
@@ -45,6 +48,7 @@ Cosmology::Cosmology (std::string pfile) {
 
 	ChiCMB = Chiz (zCMB);
 	Chimax = Chiz (zmax);
+	inv_Chimax = 1. / Chimax;
 
 	nChi = 0;
 	for (double z = 0.; z <= 99.9; z+=0.1)
@@ -134,8 +138,10 @@ Geometry::Geometry (std::string pfile):Cosmology (pfile) {
 	ca = new double [La+1];
 	dataa = new double [La];
 
-	read_GLQ (GLQ, ua, wa, La);
-
+	std::shared_ptr <FileUtils> file;
+	file -> read_GLQ (GLQ, ua, wa, La);
+	std::shared_ptr <OtherUtils> other;
+	other -> BubbleSort_2vec (ua, wa, La);
 
 	int i;
 #pragma omp parallel for private (i)
@@ -155,7 +161,19 @@ Geometry::Geometry (std::string pfile):Cosmology (pfile) {
 		}
 		ca [l] = (2.*l+1.) * 0.5 * suma;
 	}
+}
 
+double Geometry::aChi (double Chi) {
+
+	int i;
+	double u = 2. * Chi * inv_Chimax - 1.;
+	double aChi =0.;
+#pragma omp parallel for private (i) reduction (+:aChi)
+	for (i = 0; i < La; i++) {
+		aChi += ca [i] * gsl_sf_legendre_Pl (i, u);
+	}
+
+	return aChi;
 }
 
 // ----- Cosmology destructor ----- //

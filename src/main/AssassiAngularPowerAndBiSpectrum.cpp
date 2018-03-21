@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "../include/Cosmology.h"
+#include "../include/TestAssassi.h"
 
 #include "mpi.h"
 
@@ -28,9 +29,9 @@ class Assassi {
 
 			MPI::Init (argc, argv);
 
-			Geometry cosmo (argv [1]);
+			std::shared_ptr <TestAssassi> test;
+			test -> TestGeometry (argv [1]);
 
-			std::cout << cosmo.zChi (cosmo.ChiCMB) << std::endl << cosmo.zChi (cosmo.Chimax) << std::endl;
 
 			MPI::Finalize ();
 
