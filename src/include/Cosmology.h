@@ -54,6 +54,9 @@ class Cosmology {
 		/// Spectral amplitude A0 = k^3/(2*M_PI^2) * P_xi (k)
 		double A0;
 
+		///	Filename of the linear matter power spectrum in input
+		std::string Pfname;
+
 		/**
 		 *	@brief 	Hubble as a function of the redshift
 		 *	@param	z, the redshift
@@ -186,6 +189,60 @@ class GrowthFactor:public Cosmology {
 		 *	@brief	Destructor
 		 */
 		~GrowthFactor ();
+
+};
+
+class LinearMatterPowerSpectrum:public Cosmology {
+
+	private:
+
+		///	Number of k in the Power Spectrum file given in input
+		int nkinput;
+		///	Array containing the k in the Power Spectrum file
+		double* kinput;
+		///	Array containing the P(k) in the Power Spectrum file
+		double* Pinput;
+
+		/// Minimum k in the input Power Spectrum file
+		double kp;
+		/// Minimum P(k) in the input Power Spectrum file
+		double Pp;
+
+		/// Number of k at larger scale than one in input
+		int nklow;
+		/// Array of k smaller than k in input
+		double* klow;
+		/// Array of P(k) for k smaller than k in input
+		double* Plow;
+
+		/// Total number of k used for interpolation
+		int nk;
+		/// Array of k for interpolation
+		double* karr;
+		/// Array of P(k) for interpolation
+		double* Parr;
+
+	public:
+
+		/**
+		 *	@brief	Initialized Constructor
+		 *	@param	pfile, the name of the parameter file
+		 *	@return	Initialized LinearMatterPowerSpectrum object
+		 */
+		LinearMatterPowerSpectrum (std::string pfile);
+
+		/**
+		 *	@brief	This function interpolate the Power Spectrum at a certain k
+		 *	@param	k, the wave number
+		 *	@return	The Power spectrum at k, P(k)
+		 */
+		double Plin (double k);
+
+
+		/**
+		 *	@brief	Destructor
+		 */
+		~LinearMatterPowerSpectrum ();
 
 };
 

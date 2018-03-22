@@ -20,6 +20,8 @@ class TestAssassi {
 
 	void TestGrowthFactor (std::string pfile);
 
+	void TestLMPS (std::string pfile);
+
 	~TestAssassi () {};
 
 };

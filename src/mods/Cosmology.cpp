@@ -39,6 +39,8 @@ Cosmology::Cosmology (std::string pfile) {
 		ns = 0.96;
 		A0 = 2.21536e-9;
 
+		Pfname = "input/PCAMBz0.txt";
+
 		GLQ20 = "input/GaussianQuadratureWeightsAndAbscissae_lmax20.dat";
 		GLQ50 = "input/GaussianQuadratureWeightsAndAbscissae_lmax50.dat";
 	}
@@ -273,5 +275,83 @@ GrowthFactor::~GrowthFactor () {
 	delete [] wD;
 	delete [] cD;
 	delete [] dataChi;
+
+}
+
+// ----- LinearMatterPowerSpectrum constructor ----- //
+LinearMatterPowerSpectrum::LinearMatterPowerSpectrum (std::string pfile):Cosmology (pfile) {
+
+	std::shared_ptr <FileUtils> file;
+	nkinput = file -> read_number_of_lines (Pfname);
+	kinput = new double [nkinput];
+	Pinput = new double [nkinput];
+	file -> read_power_spectrum_from_file (Pfname, kinput, Pinput, nkinput);
+
+	kp = kinput [0];
+	Pp = Pinput [0];
+
+	nklow = 0;
+	for (double k = -10; k < log(kp)/log(10) - 0.01; k += 0.01) {
+		nklow ++;
+	}
+
+	klow = new double [nklow];
+	Plow = new double [nklow];
+
+	double ten2k;
+	double inv_kp = 1. / kp;
+	int count = 0;
+	for (double k = -10; k < log(kp)/log(10) - 0.01; k += 0.01) {
+
+		ten2k = pow (10, k);
+		klow [count] = ten2k;
+		Plow [count] = Pp * pow ( ten2k *  inv_kp, ns);
+		count++;
+
+	}
+
+	nk = nkinput + nklow;
+	karr = new double [nk];
+	Parr = new double [nk];
+
+	for (int k = 0; k < nklow; k++) {
+
+		karr [k] = klow [k];
+		Parr [k] = Plow [k];
+
+	}
+	for (int k = nklow; k < nk; k++) {
+
+		karr [k] = kinput [k - nklow];
+		Parr [k] = Pinput [k - nklow];
+
+	}
+
+
+}
+
+double LinearMatterPowerSpectrum::Plin (double k) {
+
+	gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+	gsl_spline *Plin = gsl_spline_alloc (gsl_interp_cspline, nk);
+	gsl_spline_init (Plin, karr, Parr, nk);
+
+	double res = gsl_spline_eval (Plin, k, acc);
+
+	gsl_interp_accel_free (acc);
+	gsl_spline_free (Plin);
+
+	return res;
+}
+
+// ----- Cosmology destructor ----- //
+LinearMatterPowerSpectrum::~LinearMatterPowerSpectrum () {
+
+	delete [] kinput;
+	delete [] Pinput;
+	delete [] klow;
+	delete [] Plow;
+	delete [] karr;
+	delete [] Parr;
 
 }

@@ -23,6 +23,8 @@ class FileUtils {
 
 		void read_GLQ (std::string fname, double* x, double* w, int size);
 
+		void read_power_spectrum_from_file (std::string Pfname, double* k, double* Pk, int nk);
+
 		/**
 		 *	@brief	Empty destructor
 		 */

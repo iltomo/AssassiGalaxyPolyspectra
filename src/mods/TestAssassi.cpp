@@ -28,3 +28,11 @@ void TestAssassi::TestGrowthFactor (std::string pfile) {
 		std::cout << a << "\t" << z << "\t" << 100. * (a-z) / z << std::endl;
 	} 
 }
+
+void TestAssassi::TestLMPS (std::string pfile) {
+
+	LinearMatterPowerSpectrum cosmo (pfile);
+	
+	for (double k = 1e-5; k < 2; k += 1e-4)
+		std::cout << k << "\t" << cosmo.Plin (k) << std::endl;
+}

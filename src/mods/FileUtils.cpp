@@ -69,3 +69,38 @@ void FileUtils::read_GLQ (std::string fname, double* x, double* w, int size){
 
 	}
 }
+
+void FileUtils::read_power_spectrum_from_file (std::string Pfname, double* k, double* Pk, int size) {
+
+	int ncomments = 0;
+	std::string line;
+	std::ifstream infile (Pfname.c_str ());
+	if (infile.is_open ()) {
+
+		for (; getline (infile, line);) {
+
+			if (line.at(0) == '#') 
+				ncomments++;
+			else
+				break;
+		}
+
+		infile.seekg(std::ios::beg);
+
+		for (int i = 0; i < ncomments; i++)
+			getline (infile, line);
+
+		for (int i = 0; i < size; i++) {
+
+			infile >> k [i];
+			infile >> Pk [i];
+
+		}
+	}
+	else {
+
+		std::cout << "ERROR in opening " << Pfname << std::endl;
+		exit (1);
+
+	}
+}
