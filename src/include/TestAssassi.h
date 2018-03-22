@@ -18,6 +18,8 @@ class TestAssassi {
 
 	void TestGeometry (std::string pfile);
 
+	void TestGrowthFactor (std::string pfile);
+
 	~TestAssassi () {};
 
 };

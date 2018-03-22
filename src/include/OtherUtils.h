@@ -25,6 +25,13 @@ class OtherUtils {
 		 */
 		void BubbleSort_2vec (double* x, double* y, int size);
 
+		/**
+		 *	@brief	Extension of the gsl hypergeometric function 2F1 for |x| > 1
+		 *	@param	a,b,c,x the parameters needed by 2F1
+		 *	@return The value of 2F1 (a,b,c,x)
+		 */
+		double hyp2f1 (double a, double b, double c, double x_hyp);
+
 };
 
 #endif

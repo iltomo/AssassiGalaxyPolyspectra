@@ -6,6 +6,11 @@
 
 #include "../include/OtherUtils.h"
 
+#include <cmath>
+
+#include "gsl/gsl_sf_hyperg.h"
+#include "gsl/gsl_sf_gamma.h"
+
 void OtherUtils::Swap (double* xp, double* yp) {
 
 	double temp = *xp;
@@ -25,4 +30,14 @@ void OtherUtils::BubbleSort_2vec (double* x, double* y, int size) {
 			}
 		}
 	}
+}
+
+double OtherUtils::hyp2f1 (double a, double b, double c, double x_hyp) {
+
+	double prefac1 = gsl_sf_gamma (b-a) * gsl_sf_gamma (c) * pow (-x_hyp, -a) / gsl_sf_gamma (b) / gsl_sf_gamma (c-a);
+	double prefac2 = gsl_sf_gamma (a-b) * gsl_sf_gamma (c) * pow (-x_hyp, -b) / gsl_sf_gamma (a) / gsl_sf_gamma (c-b);
+
+	double inv_x_hyp = 1. / x_hyp;
+
+	return prefac1 * gsl_sf_hyperg_2F1 (a, a-c+1, a-b+1, inv_x_hyp) + prefac2 * gsl_sf_hyperg_2F1 (b, b-c+1, b-a+1, inv_x_hyp);
 }

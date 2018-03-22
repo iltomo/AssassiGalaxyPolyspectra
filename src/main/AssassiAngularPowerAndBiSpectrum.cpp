@@ -29,8 +29,11 @@ class Assassi {
 
 			MPI::Init (argc, argv);
 
+			// ----- Testing functions ----- //
 			std::shared_ptr <TestAssassi> test;
-			test -> TestGeometry (argv [1]);
+			//test -> TestGeometry (argv [1]);
+			test -> TestGrowthFactor (argv [1]);
+			//test -> TestLinearMatterPowerSpectrum (argv [1]);
 
 
 			MPI::Finalize ();

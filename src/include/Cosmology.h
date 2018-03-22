@@ -94,6 +94,13 @@ class Cosmology {
 		std::string GLQ50;
 
 		/**
+		 *	@brief	Function that evaluates the growth factor
+		 *	@param	z, the redshift
+		 *	@return	The growth factor as a function of redshift z
+		 */
+		double Dz (double z);
+
+		/**
 		 *	@brief	Destructor
 		 */
 		~Cosmology ();
@@ -141,5 +148,45 @@ class Geometry:public Cosmology {
 
 };
 
+class GrowthFactor:public Cosmology {
+
+	private:
+
+		/// Maximum degree in the Legendre expansion
+		int LD;
+		/// Filename for the Gauss-Legendre quadrature with lmax = 20
+		std::string GLQ;
+		/// Abscissae for the Gauss-Legendre quadrature
+		double* uD;
+		/// Weight for the Gauss-Legendre quadrature
+		double* wD;
+		/// Coefficients for the Legendre polynomials
+		double* cD;
+		/// List of scale factor for the abscissae ua
+		double* dataChi;
+
+	public:
+
+		/**
+		 *	@brief	Initialized Constructor
+		 *	@param	pfile, the name of the parameter file
+		 *	@return	Initialized GrowthFactor object
+		 */
+		GrowthFactor (std::string pfile);
+
+		/**
+		 *	@brief	This function evaluates the growth factor at a given comoving distance
+		 *	@param	Chi, the comoving distance
+		 *	@return	The growth factor at Chi
+		 */
+		double DChi (double Chi);
+
+
+		/**
+		 *	@brief	Destructor
+		 */
+		~GrowthFactor ();
+
+};
 
 #endif

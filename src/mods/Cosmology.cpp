@@ -14,6 +14,7 @@
 #include "gsl/gsl_integration.h"
 #include "gsl/gsl_spline.h"
 #include "gsl/gsl_sf_legendre.h"
+#include "gsl/gsl_sf_hyperg.h"
 
 #include "omp.h"
 
@@ -115,6 +116,33 @@ double Cosmology::zChi (double Chi) {
 	return res;
 }
 
+double Cosmology::Dz (double z) {
+
+	double a = 1./3.;
+	double b = 1.;
+	double c = 11./6.;
+
+	double x = (Om - 1.) / Om;
+	double x1 = x / (1. + z) / (1. + z) / (1. + z);
+	double num, den;
+
+	std::shared_ptr <OtherUtils> other;
+
+	if (fabs (x) < 1)
+		den = gsl_sf_hyperg_2F1 (a, b, c, x);
+	else
+		den = other -> hyp2f1 (a, b, c, x);
+	if (fabs (x1) < 1)
+		num = gsl_sf_hyperg_2F1 (a, b, c, x1);
+	else
+		num = other -> hyp2f1 (a, b, c, x1);
+
+	if (z == 0.)
+		return 1.;
+	else
+		return num / den / (1 + z);
+}
+
 // ----- Cosmology destructor ----- //
 Cosmology::~Cosmology () {
 
@@ -183,5 +211,67 @@ Geometry::~Geometry () {
 	delete [] wa;
 	delete [] ca;
 	delete [] dataa;
+
+}
+
+// ----- GrowthFactor constructor ----- //
+GrowthFactor::GrowthFactor (std::string pfile):Cosmology (pfile) {
+
+	if (pfile == "Assassi") {
+
+		LD = 20;
+		GLQ = GLQ20;
+
+	}
+
+	uD = new double [LD];
+	wD = new double [LD];
+	cD = new double [LD+1];
+	dataChi = new double [LD];
+
+	std::shared_ptr <FileUtils> file;
+	file -> read_GLQ (GLQ, uD, wD, LD);
+	std::shared_ptr <OtherUtils> other;
+	other -> BubbleSort_2vec (uD, wD, LD);
+
+	int i;
+#pragma omp parallel for private (i)
+	for (i = 0; i < LD; i++) {
+
+		dataChi [i] = Dz (zChi ( Chimax * 0.5 * (uD [i] + 1.) ));
+
+	}
+
+	double sumD;
+	for (int l = 0; l < LD + 1; l++) {
+		sumD = 0.;
+#pragma omp parallel for private (i) reduction (+:sumD)
+		for (i = 0; i < LD; i++) {
+			sumD += wD [i] * dataChi[i] * gsl_sf_legendre_Pl (l, uD [i]);
+		}
+		cD [l] = (2.*l+1.) * 0.5 * sumD;
+	}
+}
+
+double GrowthFactor::DChi (double Chi) {
+
+	int i;
+	double u = 2. * Chi * inv_Chimax - 1.;
+	double DChi =0.;
+#pragma omp parallel for private (i) reduction (+:DChi)
+	for (i = 0; i < LD; i++) {
+		DChi += cD [i] * gsl_sf_legendre_Pl (i, u);
+	}
+
+	return DChi;
+}
+
+// ----- Cosmology destructor ----- //
+GrowthFactor::~GrowthFactor () {
+
+	delete [] uD;
+	delete [] wD;
+	delete [] cD;
+	delete [] dataChi;
 
 }

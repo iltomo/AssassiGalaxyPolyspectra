@@ -17,3 +17,14 @@ void TestAssassi::TestGeometry (std::string pfile) {
 		std::cout << a << "\t" << z << "\t" << 100. * (a-z) / z << std::endl;
 	} 
 }
+
+void TestAssassi::TestGrowthFactor (std::string pfile) {
+	
+	GrowthFactor cosmo (pfile);
+	double a,z;
+	for (double x = 0; x <= cosmo.Chimax; x+=1.) {
+		a = cosmo.DChi (x);
+		z = cosmo.Dz (cosmo.zChi(x));
+		std::cout << a << "\t" << z << "\t" << 100. * (a-z) / z << std::endl;
+	} 
+}
