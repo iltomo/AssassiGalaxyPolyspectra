@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "../include/Cosmology.h"
+#include "../include/PreliminaryFunctions.h"
 #include "../include/TestAssassi.h"
 
 #include "mpi.h"
@@ -30,10 +31,12 @@ class Assassi {
 			MPI::Init (argc, argv);
 
 			// ----- Testing functions ----- //
-			std::shared_ptr <TestAssassi> test;
+			//std::shared_ptr <TestAssassi> test;
 			//test -> TestGeometry (argv [1]);
 			//test -> TestGrowthFactor (argv [1]);
 			//test -> TestLMPS (argv [1]);
+			std::shared_ptr <ElementaryFunctions> func;
+			std::cout << func -> Hyp2F1basic (1., 2., 3., 4.) << std:: endl;
 
 
 			MPI::Finalize ();
