@@ -6,7 +6,6 @@
 
 #include "../include/PreliminaryFunctions.h"
 #include "../include/FileUtils.h"
-//#include "../include/WindowFunctions.h"
 
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_deriv.h"
@@ -756,4 +755,86 @@ void GalaxyClustering::intWgalaxy (int l, std::complex <double> nu, double Chi1a
 	}
 
 	result = dChi * sum;
+}
+
+// ----- Fourier Transform ----- //
+
+FourierTransform::FourierTransform (std::string pfile, double P, double b, double cst, int Nmax, double kmin, double kmax):LinearMatterPowerSpectrum (pfile) {
+
+	int nmax = Nmax;
+	double inv_Nmax = 1. / nmax;
+	double inv_kmin = 1. / kmin;
+
+	delta = 1. / (Nmax - 1.) * log (kmax / kmin);
+	double inv_delta = 1. / delta;
+
+	n = new int [Nmax];
+	for (int i = 0; i < Nmax; i++)
+		n [i] = i;
+
+	m = new int [Nmax+1];
+	for (int i = -Nmax / 2; i <= Nmax / 2; i++)
+		m [i] = i;
+
+	kn = new double [Nmax];
+	for  (int i = 0; i < Nmax; i++) 
+		kn [i] = kmin * exp (n[i] * delta);
+
+	etam = new std::complex <double> [Nmax+1];
+	for (int i = 0; i <= Nmax; i++) {
+		etam [i].real (b);
+		etam [i].imag (2. * M_PI * inv_Nmax * inv_delta * m[i]);
+	}
+
+	etan = new std::complex <double> [Nmax];
+	for (int i = 0; i < Nmax; i++) {
+		etan [i].real (b);
+		etam [i].imag (2. * M_PI * inv_Nmax * inv_delta * n[i]);
+	}
+
+	Pn = new double* [Nmax];
+	for (int i = 0; i < Nmax; i++) {
+		Pn [i] = new double [2];
+		
+		Pn [i][0] = kn [i];
+		Pn [i][1] = Plin (kn [i]) * pow (kn [i] * inv_kmin, -b) + cst;
+	}
+
+	cn = new std::complex<double> [Nmax];
+	double sumr, sumc;
+	for (int i = 0; i < Nmax; i++) {
+		sumr = 0.;
+		sumc = 0.;
+		for (int j = 0; j < Nmax; j++) {
+			sumr += Pn [j][1] * cos (-2.*M_PI*n[i]*n[j]*inv_Nmax) * inv_Nmax;
+			sumc += Pn [j][1] * sin (-2.*M_PI*n[i]*n[j]*inv_Nmax) * inv_Nmax;
+		}
+		cn [i].real (sumr);
+		cn [i].imag (sumc);
+	}
+
+
+
+
+
+
+
+
+
+
+		
+}
+
+FourierTransform::~FourierTransform () {
+	
+	delete [] n;
+	delete [] m;
+	delete [] kn;
+	delete [] etam;
+	delete [] etan;
+	for (int i = 0; i < nmax; i++) {
+		delete [] Pn [i];
+	}
+	delete [] Pn;
+
 }

@@ -112,6 +112,7 @@ class SpecialFunctions {
 
 };
 
+
 // ----- Window Functions ----- //
 
 class WindowFunctions:public GrowthFactor {
@@ -179,4 +180,30 @@ class GalaxyClustering:public WindowFunctions {
 
 };
 
+
+// ----- Fourier transform class ----- //
+class FourierTransform:public LinearMatterPowerSpectrum {
+
+	private:
+
+		double delta;
+		int* n;
+		int* m;
+		double* kn;
+		std::complex <double>* etam;
+		std::complex <double>* etan;
+		double** Pn;
+		std::complex <double>* cn;
+		double* cnsym;
+		
+		int nmax;
+
+	public:
+
+		FourierTransform (std::string pfile, double P, double b, double cst, int Nmax, double kmin, double kmax);
+
+		void CoeffTransfer ();
+
+		~FourierTransform ();
+};
 #endif
