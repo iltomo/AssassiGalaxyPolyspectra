@@ -1,0 +1,362 @@
+/**
+ *	@file		src/mods/PreliminaryFunctions.cpp
+ *	@date		22/03/2018
+ *	@author	ATroja
+ */
+
+#include "../include/PreliminaryFunctions.h"
+#include "PreliminaryFunctions.cpp"
+#include "../include/FileUtils.h"
+//#include "../include/WindowFunctions.h"
+
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_deriv.h"
+#include "gsl/gsl_spline.h"
+
+#include <memory>
+
+// ----- Window Functions class ----- //
+
+WindowFunctions::WindowFunctions (std::string pfile, int ell, double sc, double c, double cav):GrowthFactor (pfile) {
+
+	l = ell;
+	sigmaChi = sc;
+	Chi = c;
+	Chiav = cav;
+	DC = DChi (Chi);
+}
+
+
+// ----- GalaxyClustering class  ----- //
+
+struct DeriveFuncparams {gsl_function func;};
+
+// ----- Derive Function f using GSL ----- //
+double DeriveFunc (double x, void* param) {
+
+	struct DeriveFuncparams *par = (struct DeriveFuncparams *) param;
+
+	gsl_function f = (par -> func);
+	double res, err;
+
+	//gsl_deriv_central (&f, x, 1e-8, &res, &err);
+
+	res = (GSL_FN_EVAL (&f, x + 1e-8) - GSL_FN_EVAL (&f, x - 1e-8)) / 2e-8;
+
+	return res;
+}
+double DeriveFunc2 (double x, void* param) {
+
+	struct DeriveFuncparams *par = (struct DeriveFuncparams *) param;
+
+	gsl_function f = (par -> func);
+	double res, err;
+
+	//res = (GSL_FN_EVAL (&f, x + 2e-8) + GSL_FN_EVAL (&f, x - 2e-8) - 2.*GSL_FN_EVAL (&f, x)) / 2e-8 / 2e-8;
+
+	res = (DeriveFunc (x + 1e-8, param) - DeriveFunc (x - 1e-8, param) ) / 2e-8;
+
+	return res;
+}
+double DeriveFunc3 (double x, void* param) {
+
+	struct DeriveFuncparams *par = (struct DeriveFuncparams *) param;
+
+	gsl_function f = (par -> func);
+	double res, err;
+
+	res = (GSL_FN_EVAL (&f, x + 3e-8) + GSL_FN_EVAL (&f, x - 3e-8) - 2.*GSL_FN_EVAL (&f, x-1e-8)) / 2e-8 / 2e-8 / 2e-8;
+
+	return res;
+}
+
+/*
+double DeriveFunc2 (double x, void* param) {
+
+	double res, err;
+
+	gsl_function df;
+	df.function = &DeriveFunc;
+	df.params = &param;
+
+	gsl_deriv_central (&df, x, 1e-8, &res, &err);
+
+	return res;
+}
+*/
+
+double WindowFunctionPolynomial (gsl_function f, double x, int l) {
+
+
+	struct DeriveFuncparams DFpar {f};
+
+	/*
+	double inv_x = 1. / x;
+	double result = DeriveFunc2 (x, &DFpar);
+	result -= 2. * inv_x * DeriveFunc (x, &DFpar);
+	result -= (l * (l + 1.) - 2.) * inv_x * inv_x * GSL_FN_EVAL (&f, x);
+
+	return -result;
+	*/
+
+	return DeriveFunc (x, &DFpar);
+}
+
+// ----- Gaussian Window function x D(Chi) ----- //
+double Wg1_f (double x, void* param) {
+
+	struct WindowsParameters *par = (struct WindowsParameters *) param;
+
+	double sigmaChi = (par -> sigmaChi);
+	double Chiav = (par -> Chiav);
+	double DC = (par -> DC);
+	
+	//return (1. / sqrt (2. * M_PI) / sigmaChi) * exp ( - (x - Chiav) * (x - Chiav) / (2. * sigmaChi * sigmaChi) ) * DC;
+	return x*x*x*x;
+}
+
+double DWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &Wg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+//	return WindowFunctionPolynomial (F, x, l);
+
+	struct DeriveFuncparams pp = {F};
+	return DeriveFunc (x, &pp);
+
+}
+
+double DDWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DWg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+//	return WindowFunctionPolynomial (F, x, l);
+
+	struct DeriveFuncparams pp = {F};
+	return DeriveFunc2 (x, &pp);
+
+}
+
+double DDDWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DDWg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+//	return WindowFunctionPolynomial (F, x, l);
+
+	struct DeriveFuncparams pp = {F};
+	return DeriveFunc3 (x, &pp);
+
+}
+
+double Wg2_f (double x, void* param) {
+
+	struct WindowsParameters *par = (struct WindowsParameters *) param;
+
+	double sigmaChi = (par -> sigmaChi);
+	double Chiav = (par -> Chiav);
+	double DC = (par -> DC);
+	
+	return (1. / sqrt (2. * M_PI) / sigmaChi) * exp ( - (x - Chiav) * (x - Chiav) / (2. * sigmaChi * sigmaChi) ) * DC * DC;
+}
+
+double DWg2_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &Wg2_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double DDWg2_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DWg2_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+// ----- GalaxyCluster Constructor ----- //
+GalaxyClustering::GalaxyClustering (std::string pfile, int ell, double sc, double c, double cav):WindowFunctions (pfile, ell, sc, c, cav) {
+
+	Wg1 = Wg1_f (Chi, &WP);
+	std::cout << "Wg1 = " << Wg1 << std::endl;
+	DWg1 = DWg1_f (Chi, &WP);
+	std::cout << "DWg1 = " << DWg1 << std::endl;
+	DDWg1 = DDWg1_f (Chi, &WP);
+	std::cout << "DDWg1 = " << DDWg1 << std::endl;
+	DDDWg1 = DDDWg1_f (Chi, &WP);
+	std::cout << "DDDWg1 = " << DDDWg1 << std::endl;
+
+	Wg2 = Wg2_f (Chi, &WP);
+	DWg2 = DWg2_f (Chi, &WP);
+	DDWg2 = DDWg2_f (Chi, &WP);
+
+	WgRSD1 = 1.; //DA MODIFICARE
+
+}
+
+	
+// ----- Window Functions for galaxies ----- //
+double GalaxyClustering::Wgalaxy (int l, double Chi, double aChi, double sigmaChi, int nD, int nG, int nRSD) {
+
+	double res = 0.;
+
+	if (nRSD == 1) {
+		res = DWg1 - WgRSD1;
+	}
+	else {
+		if (nG == 1) {
+			if (nD == 0) {
+				res = Wg1;
+			}
+			if (nD == 1) {
+				res = DWg1;
+			}
+			if (nD == 2) {
+				res = DDWg1;
+			}
+			else {
+				res = DDDWg1;
+			}
+		}
+		else {
+			if (nD == 0) {
+				res = Wg2;
+			}
+			if (nD == 1) {
+				res = DWg2;
+			}
+			else {
+				res = DDWg2;
+			}
+		}
+	}
+	return res;
+}
+
+// ----- Integral eq. (3.5) ----- //
+void GalaxyClustering::intWgalaxy (int l, std::complex <double> nu, double Chi1av, double sigmaChi1, double Chi2av, double sigmaChi2, int nRSD1, int nRSD2, double t, std::string GLQ, std::complex <double>& result) {
+
+	int GLChi = 50;
+	double ChiChi [GLChi];
+	double wChi [GLChi];
+	std::shared_ptr <FileUtils> file;
+	file -> read_GLQ (GLQ, ChiChi, wChi, GLChi);
+	
+	double Chimin = Chi2av - 5. * sigmaChi2;
+	double Chimax = Chi2av + 5. * sigmaChi2;
+
+	double dChi = (Chimax - Chimin) / 2.;
+	double Chiav = (Chimax + Chimin) / 2.;
+
+	std::complex <double> mickey (0., 0.);
+	std::complex <double> goofy (0., 0.);
+	std::complex <double> sum (0., 0.);
+	for (int i = 0; i < GLChi; i++) {
+		complexpow ((dChi * ChiChi [i] + Chiav), 1. - nu, mickey);
+		complexpow (t, nu - 2., goofy);
+		
+		sum += wChi [i] * mickey 
+				 * Wgalaxy (l, dChi * ChiChi [i] + Chiav, Chi2av, sigmaChi2, 1, 1, nRSD1) * 
+				 ( Wgalaxy (l, (dChi * ChiChi [i] + Chiav) * t, Chi1av, sigmaChi1, 1, 1, nRSD2)
+				 + goofy * Wgalaxy (l, dChi * ChiChi [i] + Chiav, Chi2av, sigmaChi2, 1, 1, nRSD1) 
+				 );
+	}
+
+	result = dChi * sum;
+}
+
+/*
+// ----- Derive Function f using GSL ----- //
+double DeriveFunc (gsl_function f, double x) {
+
+	double res, err;
+
+	gsl_deriv_central (&f, x, 1e-8, &res, &err);
+
+	return res;
+}
+
+// ----- Derive Function twice using GSL ----- //
+struct DeriveFunc2params {gsl_function func;};
+
+double InterpFunc (double x, void* param) {
+
+	struct DeriveFunc2params *par = (struct DeriveFunc2params *) param;
+
+	gsl_function f = (par -> func);
+
+	//int nx = 100;
+	int nx = 5;
+	double inv_nx = 1. / nx;
+	double xarr [nx+1], yarr [nx+1], err;
+
+	for (int i = 0; i <= nx; i++){
+		xarr [i] = x + (-1. + 2. * i * inv_nx) * 2e-8 ;
+		gsl_deriv_central (&f, xarr [i], 1e-8, &yarr [i], &err);
+	}
+
+	gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+	gsl_spline *DF = gsl_spline_alloc (gsl_interp_cspline, nx);
+	gsl_spline_init (DF, xarr, yarr, nx);
+
+	double result = gsl_spline_eval (DF, x, acc);
+
+	gsl_interp_accel_free (acc);
+	gsl_spline_free (DF);
+
+	return result;
+
+}
+
+double DeriveFunc2 (gsl_function f, double x) {
+
+	double res, err;
+
+	struct DeriveFunc2params DF2par {f};
+	gsl_function df;
+	df.function = &InterpFunc;
+	df.params = &DF2par;
+
+	gsl_deriv_central (&df, x, 1e-8, &res, &err);
+
+	return res;
+}
+
+double WindowFunctionPolynomial (gsl_function f, double x, int l) {
+
+	double inv_x = 1. / x;
+
+	double result = DeriveFunc2 (f, x);
+	result -= 2. * inv_x * DeriveFunc (f,x);
+	result -= (l * (l + 1.) - 2.) * inv_x * inv_x * GSL_FN_EVAL (&f, x);
+
+
+	return -result;
+}
+*/

@@ -151,7 +151,7 @@ class Geometry:public Cosmology {
 
 };
 
-class GrowthFactor:public Cosmology {
+class GrowthFactor:public Geometry {
 
 	private:
 
@@ -167,6 +167,9 @@ class GrowthFactor:public Cosmology {
 		double* cD;
 		/// List of scale factor for the abscissae ua
 		double* dataChi;
+
+		/// The name of the parameter file is stored for being used in fChi function
+		std::string pfname;
 
 	public:
 
@@ -184,6 +187,8 @@ class GrowthFactor:public Cosmology {
 		 */
 		double DChi (double Chi);
 
+		double fChi (double Chi);
+
 
 		/**
 		 *	@brief	Destructor
@@ -192,7 +197,7 @@ class GrowthFactor:public Cosmology {
 
 };
 
-class LinearMatterPowerSpectrum:public Cosmology {
+class LinearMatterPowerSpectrum:public GrowthFactor {
 
 	private:
 

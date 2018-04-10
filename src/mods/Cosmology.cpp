@@ -15,6 +15,7 @@
 #include "gsl/gsl_spline.h"
 #include "gsl/gsl_sf_legendre.h"
 #include "gsl/gsl_sf_hyperg.h"
+#include "gsl/gsl_deriv.h"
 
 #include "omp.h"
 
@@ -217,7 +218,7 @@ Geometry::~Geometry () {
 }
 
 // ----- GrowthFactor constructor ----- //
-GrowthFactor::GrowthFactor (std::string pfile):Cosmology (pfile) {
+GrowthFactor::GrowthFactor (std::string pfile):Geometry (pfile) {
 
 	if (pfile == "Assassi") {
 
@@ -253,6 +254,8 @@ GrowthFactor::GrowthFactor (std::string pfile):Cosmology (pfile) {
 		}
 		cD [l] = (2.*l+1.) * 0.5 * sumD;
 	}
+
+	pfname = pfile;
 }
 
 double GrowthFactor::DChi (double Chi) {
@@ -268,6 +271,46 @@ double GrowthFactor::DChi (double Chi) {
 	return DChi;
 }
 
+// ----- It follows from https://stackoverflow.com/questions/19450198/calling-gsl-function-inside-a-class-in-a-shared-library , required by fChi function below----- //
+struct gsl_f_pars {
+	GrowthFactor * pt_MyClass;
+};
+
+double gslClassWrapper1 (double x, void* pp) {
+	gsl_f_pars* p = (gsl_f_pars *) pp;
+	double dc = p->pt_MyClass->DChi (x);
+	return log (dc);
+}
+double gslClassWrapper2 (double x, void* pp) {
+	gsl_f_pars* p = (gsl_f_pars *) pp;
+	double ac = p->pt_MyClass->aChi (x);
+	return log (ac);
+}
+
+double GrowthFactor::fChi (double Chi) {
+
+	GrowthFactor gf (pfname);
+	struct gsl_f_pars ppp {&gf};
+
+	gsl_function dc;
+	dc.function = &gslClassWrapper1;
+	dc.params = &ppp;
+
+	double res1, err1;
+	gsl_deriv_central (&dc, Chi, 10., &res1, &err1);
+
+	gsl_function ac;
+	ac.function = &gslClassWrapper2;
+	ac.params = &ppp;
+	
+	double res2, err2;
+	gsl_deriv_central (&ac, Chi, 10., &res2, &err2);
+
+	return  res1/res2;
+}
+
+
+
 // ----- Cosmology destructor ----- //
 GrowthFactor::~GrowthFactor () {
 
@@ -279,7 +322,7 @@ GrowthFactor::~GrowthFactor () {
 }
 
 // ----- LinearMatterPowerSpectrum constructor ----- //
-LinearMatterPowerSpectrum::LinearMatterPowerSpectrum (std::string pfile):Cosmology (pfile) {
+LinearMatterPowerSpectrum::LinearMatterPowerSpectrum (std::string pfile):GrowthFactor (pfile) {
 
 	std::shared_ptr <FileUtils> file;
 	nkinput = file -> read_number_of_lines (Pfname);

@@ -5,6 +5,12 @@
  */
 
 #include "../include/PreliminaryFunctions.h"
+#include "../include/FileUtils.h"
+//#include "../include/WindowFunctions.h"
+
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_deriv.h"
+#include "gsl/gsl_spline.h"
 
 #include <memory>
 
@@ -110,6 +116,8 @@ void ElementaryFunctions::GammaRatioC (std::complex <double> z1, std::complex <d
 }
 
 void ElementaryFunctions::Hyp2F1basic (std::complex<double> a, std::complex<double> b, std::complex<double> c, std::complex<double> z, std::complex<double>& s) {
+
+	// ----- Power series representation of 2F1 evaluated around z = 0 ----- //
 
 	s.real (0.);
 	s.imag (0.);
@@ -238,6 +246,8 @@ double ElementaryFunctions::GammaRatioC (double z1, double z2) {
 
 double ElementaryFunctions::Hyp2F1basic (double a, double b, double c, double z) {
 
+	// ----- Power series representation of 2F1 evaluated around z = 0 ----- //
+
 	double s = 0.;
 	double p = 1.;
 	double eps = 1.;
@@ -278,6 +288,8 @@ double ElementaryFunctions::MaxC (double a, double b) {
 }
 
 double SpecialFunctions::tminC (int lin, std::complex<double> nu) {
+
+	// ----- I_l (nu, t) is evaluated in the interval [tminC, 1/tminC] and is set to 0 outside this interval ----- //
 
 	double tmin;
 	double l = lin * 1.;
@@ -468,5 +480,280 @@ void SpecialFunctions::Il (int lin, std::complex<double> nu, double t, std::comp
 
 	result = res * factor;
 
+}
 
+
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+
+
+// ----- Window Functions class ----- //
+
+WindowFunctions::WindowFunctions (std::string pfile, int ell, double sc, double c, double cav):GrowthFactor (pfile) {
+
+	l = ell;
+	sigmaChi = sc;
+	Chi = c;
+	Chiav = cav;
+	DC = DChi (Chi);
+	fC = fChi (Chi);
+}
+
+// ----- GalaxyClustering class  ----- //
+
+struct DeriveFuncparams {gsl_function func;};
+
+// ----- Derive Function f using GSL ----- //
+double DeriveFunc (double x, void* param) {
+
+	struct DeriveFuncparams *par = (struct DeriveFuncparams *) param;
+
+	gsl_function f = (par -> func);
+	double res, err;
+
+	gsl_deriv_central (&f, x, 10., &res, &err);
+
+	return res;
+}
+
+double DeriveFunc2 (double x, void* param) {
+
+	double res, err;
+
+	gsl_function df;
+	df.function = &DeriveFunc;
+	df.params = param;
+
+	gsl_deriv_central (&df, x, 10., &res, &err);
+
+	return res;
+}
+
+double WindowFunctionPolynomial (gsl_function f, double x, int l) {
+
+
+	struct DeriveFuncparams DFpar {f};
+
+	double inv_x = 1. / x;
+	double result = DeriveFunc2 (x, &DFpar);
+	result -= 2. * inv_x * DeriveFunc (x, &DFpar);
+	result -= (l * (l + 1.) - 2.) * inv_x * inv_x * GSL_FN_EVAL (&f, x);
+
+	return -result;
+
+}
+
+// ----- Gaussian Window function x D(Chi) ----- //
+double Wg1_f (double x, void* param) {
+
+	struct WindowsParameters *par = (struct WindowsParameters *) param;
+
+	double sigmaChi = (par -> sigmaChi);
+	double Chiav = (par -> Chiav);
+	double DC = (par -> DC);
+	
+	return (1. / sqrt (2. * M_PI) / sigmaChi) * exp ( - (x - Chiav) * (x - Chiav) / (2. * sigmaChi * sigmaChi) ) * DC;
+	//return x*x*x*x;
+}
+
+double DWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &Wg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double DDWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DWg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double DDDWg1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DDWg1_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double Wg2_f (double x, void* param) {
+
+	struct WindowsParameters *par = (struct WindowsParameters *) param;
+
+	double sigmaChi = (par -> sigmaChi);
+	double Chiav = (par -> Chiav);
+	double DC = (par -> DC);
+	
+	return (1. / sqrt (2. * M_PI) / sigmaChi) * exp ( - (x - Chiav) * (x - Chiav) / (2. * sigmaChi * sigmaChi) ) * DC * DC;
+}
+
+double DWg2_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &Wg2_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double DDWg2_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &DWg2_f;
+	F.params = WP;
+
+	struct WindowsParameters *par = (struct WindowsParameters *) WP;
+	int l = (par -> l);
+
+	return WindowFunctionPolynomial (F, x, l);
+
+}
+
+double Wg1FChi_f (double x, void* param) {
+
+	struct WindowsParameters *par = (struct WindowsParameters *) param;
+
+	double sigmaChi = (par -> sigmaChi);
+	double Chiav = (par -> Chiav);
+	double DC = (par -> DC);
+	double fC = (par -> fC);
+	
+	return (1. / sqrt (2. * M_PI) / sigmaChi) * exp ( - (x - Chiav) * (x - Chiav) / (2. * sigmaChi * sigmaChi) ) * DC * fC;
+
+}
+
+double WgRSD1_f (double x, void* WP) {
+
+	gsl_function F;
+	F.function = &Wg1FChi_f;
+	F.params = WP;
+
+	struct DeriveFuncparams DFpar {F};
+
+	double result = DeriveFunc2 (x, &DFpar);
+
+	return result ;
+}
+
+// ----- GalaxyCluster Constructor ----- //
+GalaxyClustering::GalaxyClustering (std::string pfile, int ell, double sc, double c, double cav):WindowFunctions (pfile, ell, sc, c, cav) {
+
+	Wg1 = Wg1_f (Chi, &WP);
+	DWg1 = DWg1_f (Chi, &WP);
+	DDWg1 = DDWg1_f (Chi, &WP);
+	DDDWg1 = DDDWg1_f (Chi, &WP);
+
+	Wg2 = Wg2_f (Chi, &WP);
+	DWg2 = DWg2_f (Chi, &WP);
+	DDWg2 = DDWg2_f (Chi, &WP);
+
+	WgRSD1 = WgRSD1_f (Chi, &WP);
+
+}
+
+	
+// ----- Window Functions for galaxies ----- //
+double GalaxyClustering::Wgalaxy (int l, double Chi, double aChi, double sigmaChi, int nD, int nG, int nRSD) {
+
+	double res = 0.;
+
+	if (nRSD == 1) {
+		res = DWg1 - WgRSD1;
+	}
+	else {
+		if (nG == 1) {
+			if (nD == 0) {
+				res = Wg1;
+			}
+			if (nD == 1) {
+				res = DWg1;
+			}
+			if (nD == 2) {
+				res = DDWg1;
+			}
+			else {
+				res = DDDWg1;
+			}
+		}
+		else {
+			if (nD == 0) {
+				res = Wg2;
+			}
+			if (nD == 1) {
+				res = DWg2;
+			}
+			else {
+				res = DDWg2;
+			}
+		}
+	}
+	return res;
+}
+
+// ----- Integral eq. (3.5) ----- //
+void GalaxyClustering::intWgalaxy (int l, std::complex <double> nu, double Chi1av, double sigmaChi1, double Chi2av, double sigmaChi2, int nRSD1, int nRSD2, double t, std::string GLQ, std::complex <double>& result) {
+
+	int GLChi = 50;
+	double ChiChi [GLChi];
+	double wChi [GLChi];
+	std::shared_ptr <FileUtils> file;
+	file -> read_GLQ (GLQ, ChiChi, wChi, GLChi);
+	
+	double Chimin = Chi2av - 5. * sigmaChi2;
+	double Chimax = Chi2av + 5. * sigmaChi2;
+
+	double dChi = (Chimax - Chimin) / 2.;
+	double Chiav = (Chimax + Chimin) / 2.;
+
+	std::complex <double> mickey (0., 0.);
+	std::complex <double> goofy (0., 0.);
+	std::complex <double> sum (0., 0.);
+	for (int i = 0; i < GLChi; i++) {
+		complexpow ((dChi * ChiChi [i] + Chiav), 1. - nu, mickey);
+		complexpow (t, nu - 2., goofy);
+		
+		sum += wChi [i] * mickey 
+				 * Wgalaxy (l, dChi * ChiChi [i] + Chiav, Chi2av, sigmaChi2, 1, 1, nRSD1) * 
+				 ( Wgalaxy (l, (dChi * ChiChi [i] + Chiav) * t, Chi1av, sigmaChi1, 1, 1, nRSD2)
+				 + goofy * Wgalaxy (l, dChi * ChiChi [i] + Chiav, Chi2av, sigmaChi2, 1, 1, nRSD1) 
+				 );
+	}
+
+	result = dChi * sum;
 }
