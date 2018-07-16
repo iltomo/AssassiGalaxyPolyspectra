@@ -271,6 +271,7 @@ double GrowthFactor::DChi (double Chi) {
 	return DChi;
 }
 
+/*
 // ----- It follows from https://stackoverflow.com/questions/19450198/calling-gsl-function-inside-a-class-in-a-shared-library , required by fChi function below----- //
 struct gsl_f_pars {
 	GrowthFactor * pt_MyClass;
@@ -308,8 +309,18 @@ double GrowthFactor::fChi (double Chi) {
 
 	return  res1/res2;
 }
+*/
 
+double GrowthFactor::fChi (double Chi) {
 
+	double h = 1e-5;
+	double inv2h = 0.5e5;
+
+	double dD = (DChi(Chi+h) - DChi(Chi-h) )*inv2h;
+	double da = (aChi(Chi+h) - aChi(Chi-h) )*inv2h;
+
+	return aChi (Chi) * dD / DChi (Chi) / da;
+}
 
 // ----- Cosmology destructor ----- //
 GrowthFactor::~GrowthFactor () {

@@ -10,7 +10,11 @@
 
 #include "../include/Cosmology.h"
 #include "../include/PreliminaryFunctions.h"
+#include "../include/PowerSpectrum.h"
 #include "../include/TestAssassi.h"
+#include "../include/WindowFunction.h"
+#include "../include/Cl.h"
+#include "../include/Bispectrum.h"
 
 #include "mpi.h"
 
@@ -30,13 +34,18 @@ class Assassi {
 
 			MPI::Init (argc, argv);
 
-			// ----- Testing functions ----- //
-			//std::shared_ptr <TestAssassi> test;
-			//test -> TestGeometry (argv [1]);
-			//test -> TestGrowthFactor (argv [1]);
-			//test -> TestLMPS (argv [1]);
-			GalaxyClustering gal (argv [1], 150, 1000., 1000.,5000.);
-			std::cout << gal.WgRSD1 << std::endl;
+			Bispectrum bisp (argv [1]);
+			double a = 41./14. * bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., 0, 0, 0);
+			double b = 3. / 4. * bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., 1, -1, 0);
+			double c = 3. / 4. * bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., -1, 1, 0);
+			double d = bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., -1, 0, 1);
+			double e = bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., 0, -1, 1);
+			double f = 1. / 4. * bisp.Bgalaxy (55, 55, 55, 1500., 80., 1500., 80., 1500., 80., 1, 1, 2);
+
+			std::cout << a + b + c + d + e + f << std::endl;
+			//std::cout << a + d + e + f << std::endl;
+			//std::cout << b + c << std::endl;
+
 
 			MPI::Finalize ();
 

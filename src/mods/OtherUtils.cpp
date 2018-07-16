@@ -41,3 +41,14 @@ double OtherUtils::hyp2f1 (double a, double b, double c, double x_hyp) {
 
 	return prefac1 * gsl_sf_hyperg_2F1 (a, a-c+1, a-b+1, inv_x_hyp) + prefac2 * gsl_sf_hyperg_2F1 (b, b-c+1, b-a+1, inv_x_hyp);
 }
+
+void OtherUtils::ComplexPow (double x, std::complex<double> y, std::complex<double>& z    ) {
+
+	double x2y = pow (x, y.real ());
+	double lnx = log (x);
+	 
+	z.real (x2y * cos (y.imag () * lnx));
+	z.imag (x2y * sin (y.imag () * lnx));
+	 
+}
+

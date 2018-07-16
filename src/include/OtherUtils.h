@@ -8,6 +8,7 @@
 #define OTHERUTILS_H
 
 #include <iostream>
+#include <complex>
 
 class OtherUtils {
 
@@ -31,6 +32,14 @@ class OtherUtils {
 		 *	@return The value of 2F1 (a,b,c,x)
 		 */
 		double hyp2f1 (double a, double b, double c, double x_hyp);
+
+		/**
+		 *	@brief	Extension of the pow function for complex exponents
+		 *	@param	x, the base
+		 *	@param	y, the exponent
+		 *	@param	z, the result
+		 */
+		void ComplexPow (double x, std::complex<double> y, std::complex<double>& z);
 
 };
 

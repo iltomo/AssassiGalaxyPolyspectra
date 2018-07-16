@@ -112,6 +112,75 @@ class SpecialFunctions {
 
 };
 
+
+// ----- Window Functions ----- //
+
+class WindowFunctions:public GrowthFactor {
+
+	public:
+
+		WindowFunctions (std::string pfile, int ell, double sc, double c, double cav);
+
+		int l;
+		double sigmaChi;
+		double Chi;
+		double Chiav;
+		double DC;
+		double fC;
+
+		~WindowFunctions () {};
+};
+
+// ----- Galaxy Clustering ----- //
+
+struct WindowsParameters {
+
+	double sigmaChi;
+	double Chiav;
+	double DC;
+	int l;
+	double fC;
+};
+
+class GalaxyClustering:public WindowFunctions {
+
+	//private:
+	public:
+
+		struct WindowsParameters WP = {sigmaChi, Chiav, DC, l, fC};
+
+		double Wg1;
+		double DWg1;
+		double DDWg1;
+		double DDDWg1;
+
+		double Wg2;
+		double DWg2;
+		double DDWg2;
+
+		double WgRSD1;
+
+		double GLChi;
+		double GQW;
+		double Chitab;
+		double wChitab;
+
+
+	//public:
+
+		GalaxyClustering (std::string pfile, int ell, double sc, double c, double cav);
+
+		double Wgalaxy (int l, double Chi, double aChi, double sigmaChi, int nD, int nG, int nRSD);
+
+
+		void intWgalaxy (int l, std::complex <double> nu, double Chi1av, double sigmaChi1, double Chi2av, double sigmaChi2, int nRSD1, int nRSD2, double t, std::string GLQ, std::complex <double>& result);
+
+
+		~GalaxyClustering () {};
+
+};
+
+
 // ----- Fourier transform class ----- //
 class FourierTransform:public LinearMatterPowerSpectrum {
 
@@ -135,6 +204,6 @@ class FourierTransform:public LinearMatterPowerSpectrum {
 
 		void CoeffTransfer (double (&P) (double, double), double b, double cst, int Nmax, double kmin, double kmax, std::complex<double>* x, std::complex<double>* y);
 
-		~FourierTransform () {};
+		~FourierTransform ();
 };
 #endif
