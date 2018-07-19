@@ -197,6 +197,25 @@ class GrowthFactor:public Geometry {
 
 };
 
+class Survey:public GrowthFactor {
+
+	public:
+		Survey (std::string pfile);
+
+		double zav;
+		double zm;
+		double sigmaz;
+
+		double zmin_bin;
+		double zmax_bin;
+		double zmin_photoz;
+		double zmax_photoz;
+		
+		double inv_radFunc_norm_inv_factor;
+
+		~Survey () {};
+};
+
 class LinearMatterPowerSpectrum:public GrowthFactor {
 
 	private:

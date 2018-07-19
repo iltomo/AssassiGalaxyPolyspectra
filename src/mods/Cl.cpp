@@ -5,7 +5,6 @@
  */
 
 #include "../include/Cl.h"
-//#include "../include/WindowFunction.h"
 #include "../include/FileUtils.h"
 #include "../include/OtherUtils.h"
 

@@ -332,6 +332,24 @@ GrowthFactor::~GrowthFactor () {
 
 }
 
+// ----- Survey ----- //
+Survey::Survey (std::sting pfile):GrowthFactor (pfile) {
+
+	if (pfile == "Assassi") { //Troja
+		zav = 0.5;
+		zm = 0.05;
+		sigmaz = 0.03;
+	}
+
+	zmin_bin = zav - 0.5 * zm * (1. + zav);
+	zmax_bin = zav + 0.5 * zm * (1. + zav);
+
+	zmin_photoz = zav - 5. * sigmaz;
+	zmax_photoz = zav + 5. * sigmaz;
+
+	inv_radFunc_norm_inv_factor = 1.;
+}
+
 // ----- LinearMatterPowerSpectrum constructor ----- //
 LinearMatterPowerSpectrum::LinearMatterPowerSpectrum (std::string pfile):GrowthFactor (pfile) {
 
