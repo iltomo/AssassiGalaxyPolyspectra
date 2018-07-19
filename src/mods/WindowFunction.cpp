@@ -90,6 +90,11 @@ double newWindowFunctionPolynomial (double (*F) (double, void*), double x, void*
 
 double rs (double s, void* param) {
 
+	Survey *par = (Survey *) param;
+
+	double zz = (par -> zav);
+	double sigmaz = (par -> sigmaz);
+
 	return 1. / sqrt (2*M_PI) / sigmaz * exp (- (zz-s) * (zz-s) / 2. / sigmaz / sigmaz);
 }
 double newWg1_f (double x, void* param) {
@@ -105,23 +110,23 @@ double newWg1_f (double x, void* param) {
 	Survey survey ("Assassi");
 
 	double z = survey.zChi (x);
+
 	double zmin = survey.zmin_bin;
 	double zmax = survey.zmax_bin;
-	double sigmaz = survey.sigmaz;
 
 	double halfz = z/0.5;
 	double dndz = halfz * halfz * exp (-pow (halfz, 1.5));
 
 	gsl_function RS;
 	RS.function = &rs;
-	RS.params = &param;
+	RS.params = &survey;
 
 	double res, err;
 	gsl_integration_workspace *ww = gsl_integration_workspace_alloc (1000);
 	gsl_integration_qags (&RS, zmin, zmax, 0, 1e-7, 1000, ww, &res, &err);
 	gsl_integration_workspace_free (ww);
 
-	return survey.inv_radFunc_norm_inv_factor * dndz * res * DC * survey.HH (z) * survey.c;
+	return survey.inv_radFunc_norm_inv_factor * dndz * res * DC * survey.HH (z) / survey.c;
 	
 }
 

@@ -333,7 +333,8 @@ GrowthFactor::~GrowthFactor () {
 }
 
 // ----- Survey ----- //
-Survey::Survey (std::sting pfile):GrowthFactor (pfile) {
+
+Survey::Survey (std::string pfile):GrowthFactor (pfile) {
 
 	if (pfile == "Assassi") { //Troja
 		zav = 0.5;
